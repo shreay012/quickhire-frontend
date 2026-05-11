@@ -23,6 +23,9 @@ const CarouselSection = () => {
   const cardIcon = useCmsMedia("homepage.carousel.icon", "/images/homepage/AI.svg");
   const trackRef = useRef(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  // Bug_59 fix: debounce manual scroll clicks so rapid button presses
+  // don't queue multiple simultaneous CSS scroll-behavior animations.
+  const isScrollingRef = useRef(false);
 
   const handleScroll = useCallback((direction) => {
     const track = trackRef.current;
@@ -75,8 +78,16 @@ const CarouselSection = () => {
   };
 
   const handleManualScroll = (direction) => {
+    // Bug_59 fix: ignore rapid consecutive clicks while a scroll is in progress.
+    if (isScrollingRef.current) return;
+    isScrollingRef.current = true;
     setIsAutoScrolling(false);
     handleScroll(direction);
+
+    // Resume after transition (~400 ms for smooth scroll + buffer).
+    setTimeout(() => {
+      isScrollingRef.current = false;
+    }, 500);
 
     // Resume auto-scroll after 5 seconds
     setTimeout(() => {

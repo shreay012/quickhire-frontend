@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* Bug_88 fix: enable browser-level smooth scrolling so anchor links,
+   scroll-into-view calls, and step transitions feel polished instead
+   of instant-jumping. Respects prefers-reduced-motion via the media
+   query override below. */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 /* Custom CSS variables from the original project */
 :root {
   /* QuickHire brand colors */

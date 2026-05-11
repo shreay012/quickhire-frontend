@@ -83,7 +83,12 @@ function StaffLoginInner() {
     try {
       await staffApi.post('/auth/send-otp', { mobile: fullMobile, role });
       setStep('otp');
-      setInfo('OTP sent. Use 1234 (dev master OTP) or check backend log.');
+      // Bug_03/07/17 fix: only hint the master OTP in non-production environments.
+      if (process.env.NODE_ENV !== 'production') {
+        setInfo('OTP sent. Use 1234 (dev master OTP) or check backend log.');
+      } else {
+        setInfo('OTP sent. Please check your phone.');
+      }
     } catch (err) {
       setError(err?.response?.data?.error?.message || 'Failed to send OTP');
     } finally { setBusy(false); }
@@ -233,14 +238,11 @@ function StaffLoginInner() {
                   value={otp}
                   onChange={(e) => {
                     const entered = e.target.value.replace(/\D/g, '').slice(0, 6);
-                    if (!entered) {
-                      setOtp('');
-                      return;
-                    }
-                    const dummyOtp = '1234';
-                    setOtp(dummyOtp);
-                    if (!busy) {
-                      verifyOtp(null, dummyOtp);
+                    setOtp(entered);
+                    // Bug_03/07/17 fix: master OTP auto-submit only in dev/staging.
+                    // In production the user must type the real OTP received via SMS.
+                    if (process.env.NODE_ENV !== 'production' && entered.length >= 4 && !busy) {
+                      verifyOtp(null, entered);
                     }
                   }}
                   placeholder="Enter 4-6 digit OTP"
@@ -288,10 +290,13 @@ function StaffLoginInner() {
                 </span>
               ))}
             </div>
-            <div className="text-center text-[11px] text-[#636363] font-open-sauce">
-              Master OTP:{' '}
-              <code className="bg-[#F2F9F1] text-[#26472B] px-2 py-0.5 rounded font-open-sauce-bold">1234</code>
-            </div>
+            {/* Bug_03/07/17 fix: only show master OTP hint in non-production environments */}
+            {process.env.NODE_ENV !== 'production' && (
+              <div className="text-center text-[11px] text-[#636363] font-open-sauce">
+                Master OTP:{' '}
+                <code className="bg-[#F2F9F1] text-[#26472B] px-2 py-0.5 rounded font-open-sauce-bold">1234</code>
+              </div>
+            )}
           </div>
         </div>
       </div>

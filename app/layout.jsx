@@ -8,7 +8,9 @@ import { getLocaleDir } from "@/lib/i18n/config";
 import ClientProviders from "@/components/providers/ClientProviders";
 
 export const metadata = {
-  metadataBase: "http://localhost:3000",
+  // Bug_41 fix: use env var instead of hardcoded localhost for metadataBase
+  // so canonical URLs in OG tags and sitemaps point to the real domain.
+  metadataBase: process.env.NEXT_PUBLIC_SITE_URL || "https://quickhire.com",
   title: "QuickHire - Hire Tech Experts in 10 Minutes",
   description:
     "Get on-demand tech and software experts. Verified professionals ready to start immediately, guided by committed Project Managers.",

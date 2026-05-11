@@ -79,10 +79,15 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [isFullNameFocused, setIsFullNameFocused] = useState(false);
   const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [userData, setUserData] = useState(null);
 
   const autoLoginOtpRef = useRef("");
   const autoSentNumberRef = useRef("");
+  // Bug_84 fix: ref for the country picker dropdown container — used by the
+  // click-outside effect to close it when the user clicks elsewhere.
+  const countryPickerRef = useRef(null);
   // Bug_46 fix (2026-05-11): track wrong-OTP attempts so the user sees
   // "Wrong OTP — 3 attempts left" instead of a bare "Invalid OTP".
   // `otpLocked` flips true when the backend returns AUTH_OTP_LOCKED
@@ -183,7 +188,19 @@ const LoginPage = () => {
 
     handleResize();
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+
+    // Bug_84 fix: close country picker when user clicks outside it.
+    const handleClickOutside = (e) => {
+      if (countryPickerRef.current && !countryPickerRef.current.contains(e.target)) {
+        setShowCountryPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   // Update error message when Redux error changes
@@ -981,9 +998,24 @@ const LoginPage = () => {
                         <input
                           type="text"
                           value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
+                          onChange={(e) => {
+                            // Bug_04/18 + Bug_19: strip leading whitespace as user types,
+                            // validate only letters + spaces + multilingual chars.
+                            const raw = e.target.value.replace(/^\s+/, "");
+                            setFullName(raw);
+                            const nameRegex = /^[\p{L}\s]+$/u;
+                            if (raw && !nameRegex.test(raw)) {
+                              setNameError("Name may only contain letters and spaces.");
+                            } else {
+                              setNameError("");
+                            }
+                          }}
                           onFocus={() => setIsFullNameFocused(true)}
-                          onBlur={() => setIsFullNameFocused(false)}
+                          onBlur={() => {
+                            setIsFullNameFocused(false);
+                            // Bug_19: trim leading/trailing whitespace on blur
+                            setFullName((v) => v.trim());
+                          }}
                           placeholder={t("enterFullName")}
                           className="w-full h-full bg-transparent outline-none"
                           style={{
@@ -998,6 +1030,12 @@ const LoginPage = () => {
                           }}
                         />
                       </div>
+                      {/* Bug_04/18: inline name validation error */}
+                      {nameError && (
+                        <p style={{ color: "#DC3545", fontSize: "12px", marginTop: "4px", fontFamily: "'OpenSauceOne', sans-serif" }}>
+                          {nameError}
+                        </p>
+                      )}
                     </div>
 
                     {/* Email Address Field */}
@@ -1026,7 +1064,18 @@ const LoginPage = () => {
                         <input
                           type="email"
                           value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          onChange={(e) => {
+                            // Bug_06/21: auto-strip whitespace + lowercase as user types
+                            const cleaned = e.target.value.replace(/\s/g, "").toLowerCase();
+                            setEmail(cleaned);
+                            // Bug_05/20: inline email regex validation
+                            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                            if (cleaned && !emailRegex.test(cleaned)) {
+                              setEmailError("Please enter a valid email address.");
+                            } else {
+                              setEmailError("");
+                            }
+                          }}
                           onFocus={() => setIsEmailFocused(true)}
                           onBlur={() => setIsEmailFocused(false)}
                           placeholder={t("emailPlaceholder")}
@@ -1043,6 +1092,12 @@ const LoginPage = () => {
                           }}
                         />
                       </div>
+                      {/* Bug_05/20: inline email validation error */}
+                      {emailError && (
+                        <p style={{ color: "#DC3545", fontSize: "12px", marginTop: "4px", fontFamily: "'OpenSauceOne', sans-serif" }}>
+                          {emailError}
+                        </p>
+                      )}
                     </div>
                   </>
                 ) : (
@@ -1142,6 +1197,9 @@ const LoginPage = () => {
                         {/* Country code picker — opens a dropdown of supported
                             countries with flag + dial code. Selected dial is
                             sent to backend as part of E.164 number. */}
+                        {/* Bug_84 fix: countryPickerRef wraps both the trigger
+                            button and dropdown so click-outside detection works. */}
+                        <div ref={countryPickerRef} style={{ display: "contents" }}>
                         <button
                           type="button"
                           onClick={() => setShowCountryPicker((v) => !v)}
@@ -1203,6 +1261,7 @@ const LoginPage = () => {
                             ))}
                           </div>
                         )}
+                        </div>{/* end countryPickerRef wrapper */}
 
                         <div className="flex-1 flex items-center">
                           <input
