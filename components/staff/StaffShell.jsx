@@ -35,10 +35,15 @@ import { CountryPreviewSwitcher } from '@/components/cms/CountryPreviewSwitcher'
 
 const ROLE_META = {
   super_admin: { label: 'Super Admin', tag: 'Super Admin Console' },
-  admin:    { label: 'Admin',       tag: 'Admin Console' },
-  pm:       { label: 'Project Mgr', tag: 'PM Workspace' },
-  resource: { label: 'Resource',    tag: 'My Workspace' },
-  seo:      { label: 'SEO Manager', tag: 'SEO Console' },
+  admin:       { label: 'Admin',       tag: 'Admin Console' },
+  pm:          { label: 'Project Mgr', tag: 'PM Workspace' },
+  resource:    { label: 'Resource',    tag: 'My Workspace' },
+  seo:         { label: 'SEO Manager', tag: 'SEO Console' },
+  finance:     { label: 'Finance',     tag: 'Finance Console' },
+  ops:         { label: 'Ops',         tag: 'Ops Console' },
+  support:     { label: 'Support',     tag: 'Support Console' },
+  growth:      { label: 'Growth',      tag: 'Growth Console' },
+  viewer:      { label: 'Viewer',      tag: 'Read-Only Portal' },
 };
 
 // Map known admin path prefixes → human label, used by the auto-breadcrumb.
@@ -78,6 +83,16 @@ const PATH_LABELS = {
   '/resource':        'Dashboard',
   '/resource/assignments': 'Assignments',
   '/resource/time-logs':   'Time Logs',
+  '/seo-admin':           'Dashboard',
+  '/seo-admin/pages':     'Page SEO',
+  '/seo-admin/global':    'Global Settings',
+  '/seo-admin/redirects': 'Redirects',
+  '/seo-admin/blog':      'Blog Posts',
+  '/finance':               'Dashboard',
+  '/finance/payments':      'Payments',
+  '/finance/refunds':       'Refunds',
+  '/finance/payouts':       'Payouts',
+  '/finance/reconciliation':'Reconciliation',
 };
 
 function deriveCrumbs(pathname, role) {
@@ -93,6 +108,12 @@ function deriveCrumbs(pathname, role) {
     items.push({ label, href: acc });
   }
   return items;
+}
+
+// Resolved home href used both for the logo link and the active-link guard
+// (prevents the dashboard item lighting up on every child route).
+function resolveHomeHref(homeHref, role) {
+  return homeHref || `/${role}`;
 }
 
 export default function StaffShell({ role, allowedRoles, homeHref, links, children }) {
@@ -143,6 +164,7 @@ export default function StaffShell({ role, allowedRoles, homeHref, links, childr
   };
 
   const crumbs = useMemo(() => deriveCrumbs(pathname || '', role), [pathname, role]);
+  const homeHrefNorm = resolveHomeHref(homeHref, role);
   const meta = ROLE_META[role] || { label: role, tag: 'Portal' };
   const initials = (user?.name || user?.mobile || '?').slice(0, 1).toUpperCase();
 
@@ -219,7 +241,11 @@ export default function StaffShell({ role, allowedRoles, homeHref, links, childr
               {!collapsed && (
                 <div className="space-y-0.5">
                   {group.items.map((l) => {
-                    const active = pathname === l.href || (l.href !== `/${role}` && pathname?.startsWith(l.href));
+                    // Exact match always wins. Sub-path match uses trailing
+                    // slash to avoid '/seo-admin' activating for '/seo-admin/pages'.
+                    // Home link (dashboard) is excluded from the sub-path check
+                    // so it only lights up when you're exactly on the root.
+                    const active = pathname === l.href || (l.href !== homeHrefNorm && pathname?.startsWith(l.href + '/'));
                     return (
                       <Link
                         key={l.href}
@@ -333,7 +359,7 @@ export default function StaffShell({ role, allowedRoles, homeHref, links, childr
           </nav>
 
           <div className="flex items-center gap-3">
-            {role === 'admin' && <GlobalSearch />}
+            {(role === 'admin' || role === 'super_admin') && <GlobalSearch />}
 
             {/* Phase D.d (2026-05-10): per-country preview switcher.
                 super_admin sees 5 clickable chips for previewing as any

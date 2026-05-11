@@ -7,5 +7,5 @@ const links = [
 ];
 
 export default function PmLayout({ children }) {
-  return <StaffShell role="pm" links={links}>{children}</StaffShell>;
+  return <StaffShell role="pm" homeHref="/pm" links={links}>{children}</StaffShell>;
 }

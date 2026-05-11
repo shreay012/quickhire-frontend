@@ -8,5 +8,5 @@ const links = [
 ];
 
 export default function ResourceLayout({ children }) {
-  return <StaffShell role="resource" links={links}>{children}</StaffShell>;
+  return <StaffShell role="resource" homeHref="/resource" links={links}>{children}</StaffShell>;
 }
