@@ -402,8 +402,10 @@ const HoursStep = ({ selectedService: selectedServiceProp, serviceId } = {}) => 
       setSelectedPlan("plan-4"); // Default to 4-hour plan
       setSelectedAssignment("schedule"); // Default to scheduled booking
       setSelectedDates([allDates[0].date]); // Select first available date
-      setSelectedTimeSlot(allDates[0].availabilityData?.timeSlots?.[0] ? 
-        `slot-${allDates[0].dateNumber}-0` : null);
+      // Do NOT pre-set a slot ID here — the slot auto-select effect fires
+      // after selectedDates is set and picks the first non-passed slot using
+      // the correct `slot-{index}-{startTime}-{endTime}` format.
+      setSelectedTimeSlot(null);
     }
   }, [isAuthenticated, selectedPlan]); // Only depend on auth state, not allDates (recalculated each render)
 
