@@ -852,8 +852,9 @@ const DetailsStep = () => {
       return;
     }
 
-    const dummyOtp = ["1", "2", "3", "4"];
-    setOtp(dummyOtp);
+    const nextOtp = [...otp];
+    nextOtp[index] = cleaned;
+    setOtp(nextOtp);
 
     if (errorMessage) {
       setErrorMessage(null);
@@ -863,8 +864,9 @@ const DetailsStep = () => {
       otpRefs[index + 1].current?.focus();
     }
 
-    if (!isLoading && otpSent) {
-      handleVerifyOtp(dummyOtp.join(""));
+    // Auto-submit when all 4 digits are filled
+    if (index === 3 && !isLoading && otpSent) {
+      handleVerifyOtp(nextOtp.join(""));
     }
   };
 
