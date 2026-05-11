@@ -21,6 +21,9 @@ export default function HowQuickHireWorks({ hideVideo }) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
   const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay
+  // Bug_52 fix: track whether the video asset failed to load so we can show
+  // a "Video coming soon" placeholder instead of a broken black box.
+  const [videoError, setVideoError] = useState(false);
   const videoRef = useRef(null);
 
   const togglePlayPause = () => {
@@ -99,25 +102,40 @@ export default function HowQuickHireWorks({ hideVideo }) {
               position: "relative",
             }}
           >
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              src="/videos/howWeHire.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="metadata"
-              onClick={togglePlayPause}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-            />
+            {/* Bug_52 fix: show a graceful fallback when the video asset
+                is missing (e.g. staging deploy without the /videos/ dir). */}
+            {videoError ? (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-[#F2F9F1] text-[#26472B] rounded-2xl">
+                <svg className="w-16 h-16 mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                </svg>
+                <p className="font-semibold text-lg">Video coming soon</p>
+                <p className="text-sm text-[#26472B]/70 mt-1 text-center max-w-xs">
+                  Read the five steps below to learn how QuickHire works.
+                </p>
+              </div>
+            ) : (
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                src="/videos/howWeHire.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="metadata"
+                onClick={togglePlayPause}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onError={() => setVideoError(true)}
+              />
+            )}
 
-            {/* Overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+            {/* Overlay gradient — only when video loaded */}
+            {!videoError && <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />}
 
-            {/* Sound indicator - show when muted */}
-            {isMuted && (
+            {/* Sound indicator - show when muted and video loaded */}
+            {!videoError && isMuted && (
               <div
                 className="absolute top-4 right-4 bg-black/60 text-white px-3 py-2 rounded-full text-sm flex items-center gap-2 cursor-pointer hover:bg-black/80 transition-colors z-10"
                 onClick={handleUnmute}
@@ -133,8 +151,8 @@ export default function HowQuickHireWorks({ hideVideo }) {
               </div>
             )}
 
-            {/* Custom Play/Pause Button - Only show on hover */}
-            {isHovering && (
+            {/* Custom Play/Pause Button - Only show on hover and when video loaded */}
+            {!videoError && isHovering && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <IconButton
                   onClick={togglePlayPause}

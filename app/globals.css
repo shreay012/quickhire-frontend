@@ -178,6 +178,22 @@ body {
   display: none; /* Chrome, Safari and Opera */
 }
 
+/* Bug_76 fix: ensure keyboard focus is always visible on interactive
+   elements. The browser default outline is suppressed by Tailwind's
+   preflight, so we restore a consistent brand-coloured ring here so
+   tab-navigation is never invisible for keyboard and AT users (WCAG 2.4.7). */
+:focus-visible {
+  outline: 2px solid var(--quickhire-green);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Prevent the focus ring from showing on mouse clicks — only on
+   keyboard/programmatic focus so the UI stays clean for pointer users. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* MUI + Tailwind conflict resolution */
 .MuiBox-root {
   box-sizing: border-box;
