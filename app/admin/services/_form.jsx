@@ -42,28 +42,6 @@ const COUNTRIES = [
   { code: 'CA', name: 'Canada',         currency: 'CAD' },
 ];
 
-// Must match CATEGORY_ICON keys in lib/utils/serviceIcon.js so the icon resolves correctly
-const SERVICE_CATEGORIES = [
-  'AI Engineers',
-  'Backend Developers',
-  'Frontend Development',
-  'UI/UX Designer',
-  'IT Support',
-  'DevOps',
-  'Content Writing',
-  'Digital Marketing',
-  'Quality Assurance',
-  'Mobile App Development',
-  'Security Testing',
-  'Gen Ai Development',
-  'API Development',
-  'React.js Development',
-  'Website Design',
-  'Third Party Integration',
-  'CI/CD Pipeline Management',
-  'SEO Blog Writing',
-  'IT services',
-];
 
 const TABS = ['Basic Info', 'Translations', 'Technologies & Scope', 'FAQs', 'Page Content', 'Geo Pricing'];
 
@@ -1215,16 +1193,13 @@ export default function ServiceFormPage({ serviceId = null, initialData = null }
 
               <div>
                 <Label>Category <span className="text-[#909090] normal-case font-normal">— controls the icon shown on the customer card</span></Label>
-                <select
+                <input
+                  type="text"
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  placeholder="e.g. AI Engineers, DevOps, UI/UX Designer"
                   className="w-full border border-[#E5F1E2] rounded-xl px-4 py-2.5 text-sm bg-white outline-none focus:border-[#45A735] focus:ring-1 focus:ring-[#45A73520] transition-colors"
-                >
-                  <option value="">— Select a category —</option>
-                  {SERVICE_CATEGORIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                />
                 <p className="text-xs text-[#909090] mt-1">
                   Determines which icon appears on the homepage service card.
                   If left blank the icon defaults to a keyword match on the service name.

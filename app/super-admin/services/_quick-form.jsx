@@ -20,27 +20,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import staffApi from '@/lib/axios/staffApi';
 import { showError, showSuccess } from '@/lib/utils/toast';
 
-const SERVICE_CATEGORIES = [
-  'AI Engineers',
-  'Backend Developers',
-  'Frontend Development',
-  'UI/UX Designer',
-  'IT Support',
-  'DevOps',
-  'Content Writing',
-  'Digital Marketing',
-  'Quality Assurance',
-  'Mobile App Development',
-  'Security Testing',
-  'Gen Ai Development',
-  'API Development',
-  'React.js Development',
-  'Website Design',
-  'Third Party Integration',
-  'CI/CD Pipeline Management',
-  'SEO Blog Writing',
-  'IT services',
-];
 
 // Read either an i18n object or a plain string, return the English value
 // so the simple form can show / edit it as a flat input. This is what
@@ -273,16 +252,13 @@ export default function QuickServiceForm({ serviceId = null, initialData = null 
           </div>
           <div>
             <label className={labelCls}>Category</label>
-            <select
+            <input
+              type="text"
               value={form.category}
               onChange={(e) => set('category', e.target.value)}
+              placeholder="e.g. AI Engineers, DevOps, UI/UX Designer"
               className={inputCls}
-            >
-              <option value="">— Select category —</option>
-              {SERVICE_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            />
             <p className="text-[11px] text-[#909090] mt-1.5">
               Controls the icon shown on the homepage card.
             </p>
