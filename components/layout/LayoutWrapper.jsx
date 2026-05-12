@@ -22,9 +22,12 @@ export default function LayoutWrapper({ children }) {
     return <>{children}</>;
   }
 
-  // Staff portals (admin/pm/resource) use their own layout
+  // Staff portals use their own StaffShell layout — no customer header/footer.
   if (
     pathname.startsWith('/admin') ||
+    pathname.startsWith('/super-admin') ||
+    pathname.startsWith('/seo-admin') ||
+    pathname.startsWith('/finance') ||
     pathname.startsWith('/pm') ||
     pathname.startsWith('/resource') ||
     pathname.startsWith('/staff-login')
