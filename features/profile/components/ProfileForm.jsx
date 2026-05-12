@@ -47,12 +47,26 @@ const FormSkeleton = () => (
   </div>
 );
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validate(data) {
+  const errs = {};
+  if (!data.firstName.trim()) errs.firstName = 'First name is required.';
+  else if (data.firstName.trim().length < 2) errs.firstName = 'First name must be at least 2 characters.';
+  if (!data.lastName.trim()) errs.lastName = 'Last name is required.';
+  else if (data.lastName.trim().length < 2) errs.lastName = 'Last name must be at least 2 characters.';
+  if (!data.email.trim()) errs.email = 'Email is required.';
+  else if (!EMAIL_RE.test(data.email.trim())) errs.email = 'Please enter a valid email address.';
+  return errs;
+}
+
 const ProfileForm = () => {
   const dispatch = useDispatch();
   const t = useTranslations('profile');
   const { user, isLoading } = useSelector((state) => state.auth);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -81,13 +95,22 @@ const ProfileForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const next = { ...formData, [name]: value };
+    setFormData(next);
+    // Clear the error for this field as soon as the user starts correcting it.
+    if (errors[name]) {
+      const newErrors = validate(next);
+      setErrors((prev) => ({ ...prev, [name]: newErrors[name] || undefined }));
+    }
   };
 
   const handleSave = async () => {
+    const validationErrors = validate(formData);
+    if (Object.keys(validationErrors).length) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
     try {
       setIsSaving(true);
       
@@ -159,7 +182,7 @@ const ProfileForm = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label className="block text-gray-700 text-sm font-medium mb-2">
-              {t('firstName')}
+              {t('firstName')} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -167,13 +190,14 @@ const ProfileForm = () => {
               value={formData.firstName}
               onChange={handleChange}
               disabled={!isEditing}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg font-opensauce text-gray-900 bg-white disabled:bg-gray-100 disabled:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#45A735] transition-all"
+              className={`w-full px-4 py-3 border rounded-lg font-opensauce text-gray-900 bg-white disabled:bg-gray-100 disabled:text-gray-600 focus:outline-none focus:ring-2 transition-all ${errors.firstName ? 'border-red-400 focus:ring-red-300' : 'border-gray-300 focus:ring-[#45A735]'}`}
             />
+            {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>}
           </div>
 
           <div>
             <label className="block text-gray-700 text-sm font-medium mb-2">
-              {t('lastName')}
+              {t('lastName')} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -181,8 +205,9 @@ const ProfileForm = () => {
               value={formData.lastName}
               onChange={handleChange}
               disabled={!isEditing}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg font-opensauce text-gray-900 bg-white disabled:bg-gray-100 disabled:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#45A735] transition-all"
+              className={`w-full px-4 py-3 border rounded-lg font-opensauce text-gray-900 bg-white disabled:bg-gray-100 disabled:text-gray-600 focus:outline-none focus:ring-2 transition-all ${errors.lastName ? 'border-red-400 focus:ring-red-300' : 'border-gray-300 focus:ring-[#45A735]'}`}
             />
+            {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>}
           </div>
         </div>
 
@@ -190,7 +215,7 @@ const ProfileForm = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label className="block text-gray-700 text-sm font-medium mb-2">
-              {t('emailId')}
+              {t('emailId')} <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -198,8 +223,9 @@ const ProfileForm = () => {
               value={formData.email}
               onChange={handleChange}
               disabled={!isEditing}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg font-opensauce text-gray-900 bg-white disabled:bg-gray-100 disabled:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#45A735] transition-all"
+              className={`w-full px-4 py-3 border rounded-lg font-opensauce text-gray-900 bg-white disabled:bg-gray-100 disabled:text-gray-600 focus:outline-none focus:ring-2 transition-all ${errors.email ? 'border-red-400 focus:ring-red-300' : 'border-gray-300 focus:ring-[#45A735]'}`}
             />
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </div>
 
           <div>
@@ -222,7 +248,7 @@ const ProfileForm = () => {
           <div className="flex justify-end gap-4 pt-6">
             <button
               type="button"
-              onClick={() => setIsEditing(false)}
+              onClick={() => { setIsEditing(false); setErrors({}); }}
               className="px-6 border-2 border-gray-300 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-50 transition-colors font-opensauce"
             >
               {t('cancel')}

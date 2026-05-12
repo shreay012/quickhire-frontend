@@ -6,15 +6,29 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useTranslations } from 'next-intl';
 import { updateUserProfile } from '@/lib/redux/slices/userProfileSlice/userProfileSlice';
 import { getProfile } from '@/lib/redux/slices/authSlice/authSlice';
+import { fetchOngoingBookings, fetchCompletedBookings } from '@/lib/redux/slices/bookingSlice/bookingSlice';
 
 const ProfileSidebar = ({ activeSection, onSectionChange }) => {
   const { user } = useSelector((state) => state.auth);
+  const ongoingBookings = useSelector((state) => state.booking?.ongoingBookings || []);
+  const completedBookings = useSelector((state) => state.booking?.completedBookings || []);
+  const ongoingPagination = useSelector((state) => state.booking?.ongoingBookingsPagination);
+  const completedPagination = useSelector((state) => state.booking?.completedBookingsPagination);
+  // Use server-side total when available (pagination.total), fall back to array length.
+  const ongoingCount = ongoingPagination?.total ?? ongoingBookings.length;
+  const completedCount = completedPagination?.total ?? completedBookings.length;
   const t = useTranslations('profile');
   const fileInputRef = useRef(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState(null);
   const [prevImagePath, setPrevImagePath] = useState(null);
   const dispatch = useDispatch();
+
+  // Fetch booking counts on mount so the sidebar shows live numbers.
+  useEffect(() => {
+    dispatch(fetchOngoingBookings({ page: 1, pageSize: 1 }));
+    dispatch(fetchCompletedBookings({ page: 1, pageSize: 1 }));
+  }, [dispatch]);
 
   const getInitials = () => {
     if (user?.firstName && user?.lastName) {
@@ -149,7 +163,7 @@ const ProfileSidebar = ({ activeSection, onSectionChange }) => {
           <div className="border border-gray-300 bg-white rounded-xl p-4 text-left">
             <p className="font-[600] text-[12px] mb-2" style={{ color: '#000000' }}>{t('ongoingBooking')}</p>
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-gray-900">{user?.ongoingJobs || 0}</span>
+              <span className="text-2xl font-bold text-gray-900">{ongoingCount}</span>
               <div className="w-8 h-8 bg-[#45A735] rounded-lg flex items-center justify-center">
                 <Image src="/goingBooking.svg" alt="Booking" width={18} height={18} loading="lazy" />
               </div>
@@ -160,7 +174,7 @@ const ProfileSidebar = ({ activeSection, onSectionChange }) => {
           <div className="border border-gray-300 bg-white rounded-xl p-4 text-left">
             <p className="font-[600] text-[12px] mb-2" style={{ color: '#000000' }}>{t('completedBookings')}</p>
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-gray-900">{user?.completedJobs || 0}</span>
+              <span className="text-2xl font-bold text-gray-900">{completedCount}</span>
               <div className="w-8 h-8 bg-[#45A735] rounded-lg flex items-center justify-center">
                 <Image src="/Booking.svg" alt="Booking" width={18} height={18} loading="lazy" />
               </div>
@@ -295,7 +309,7 @@ const ProfileSidebar = ({ activeSection, onSectionChange }) => {
           <div className="border border-gray-300 bg-white rounded-xl p-4 text-left">
             <p className="font-[600] text-[12px] mb-2" style={{ color: '#000000' }}>{t('ongoingBooking')}</p>
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-gray-900">{user?.ongoingJobs || 0}</span>
+              <span className="text-2xl font-bold text-gray-900">{ongoingCount}</span>
               <div className="w-8 h-8 bg-[#45A735] rounded-lg flex items-center justify-center">
                 <Image src="/Booking.svg" alt="Booking" width={16} height={16} />
               </div>
@@ -306,7 +320,7 @@ const ProfileSidebar = ({ activeSection, onSectionChange }) => {
           <div className="border border-gray-300 bg-white rounded-xl p-4 text-left">
             <p className="font-[600] text-[12px] mb-2" style={{ color: '#000000' }}>{t('completedBookings')}</p>
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-gray-900">{user?.completedJobs || 0}</span>
+              <span className="text-2xl font-bold text-gray-900">{completedCount}</span>
               <div className="w-8 h-8 bg-[#45A735] rounded-lg flex items-center justify-center">
                 <Image src="/Booking.svg" alt="Booking" width={16} height={16} />
               </div>
