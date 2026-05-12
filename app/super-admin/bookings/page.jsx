@@ -65,19 +65,13 @@ export default function AdminBookingsPage() {
   const [activeStatus, setActiveStatus] = useState('');
   const [page, setPage]                 = useState(1);
 
-  // ─── PM picker state ──────────────────────────────────────────────────────
-  const [pms, setPms]               = useState([]);
-
   // ─── Inline action states (no window.confirm / window.alert) ─────────────
   const [confirmTarget, setConfirmTarget] = useState(null);   // bookingId to confirm
   const [rejectTarget, setRejectTarget]   = useState(null);   // bookingId to reject
-  const [assignModal, setAssignModal]     = useState(null);   // bookingId to assign PM
-  const [selectedPmId, setSelectedPmId]   = useState('');
 
   // ─── Loading/busy states ──────────────────────────────────────────────────
   const [busyConfirm, setBusyConfirm] = useState(null);
   const [busyReject, setBusyReject]   = useState(null);
-  const [busyAssign, setBusyAssign]   = useState(false);
 
   // ─── Bulk selection ───────────────────────────────────────────────────────
   // selectedIds is a Set of booking ids. Lets the admin tick a few rows
@@ -159,13 +153,6 @@ export default function AdminBookingsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // ─── Load PMs list ────────────────────────────────────────────────────────
-  useEffect(() => {
-    staffApi.get('/admin/pms-list')
-      .then((r) => setPms(r.data?.data || r.data || []))
-      .catch(() => {});
-  }, []);
-
   // ─── Status tab change ────────────────────────────────────────────────────
   const handleStatusChange = (key) => {
     setActiveStatus(key);
@@ -200,27 +187,6 @@ export default function AdminBookingsPage() {
       showError(e?.response?.data?.error?.message || e?.message || 'Failed to cancel booking.');
     } finally {
       setBusyReject(null);
-    }
-  };
-
-  const openAssignModal = (id) => {
-    setAssignModal(id);
-    setSelectedPmId('');
-  };
-
-  const doAssign = async () => {
-    if (!assignModal || !selectedPmId) return;
-    setBusyAssign(true);
-    try {
-      await staffApi.post(`/admin/bookings/${assignModal}/assign-pm`, { pmId: selectedPmId });
-      showSuccess('PM assigned successfully.');
-      setAssignModal(null);
-      setSelectedPmId('');
-      await load();
-    } catch (e) {
-      showError(e?.response?.data?.error?.message || e?.message || 'Failed to assign PM.');
-    } finally {
-      setBusyAssign(false);
     }
   };
 
@@ -278,11 +244,11 @@ export default function AdminBookingsPage() {
       ),
     },
     {
-      key: 'pm',
-      label: 'PM',
+      key: 'country',
+      label: 'Country',
       render: (r) => (
-        <span className={`text-sm font-open-sauce ${r.pmName ? 'text-[#26472B] font-open-sauce-medium' : 'text-[#909090] italic'}`}>
-          {s(r.pmName) || 'Unassigned'}
+        <span className="text-sm font-open-sauce-semibold text-[#26472B]">
+          {r.country || '—'}
         </span>
       ),
     },
@@ -355,13 +321,6 @@ export default function AdminBookingsPage() {
                 </Button>
               )}
             </>
-          )}
-
-          {/* Confirmed: assign PM */}
-          {r.status === 'confirmed' && (
-            <Button size="sm" variant="subtle" onClick={() => openAssignModal(r._id)}>
-              Assign PM
-            </Button>
           )}
 
           {/* Reject: shown for non-terminal, non-pending statuses */}
@@ -536,80 +495,6 @@ export default function AdminBookingsPage() {
         )}
       </div>
 
-      {/* ── Assign PM Modal ───────────────────────────────────────────────── */}
-      {assignModal && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-          onClick={() => setAssignModal(null)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl border border-[#E5F1E2] w-full max-w-md p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal header */}
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-open-sauce-bold text-[#26472B]">
-                  Assign Project Manager
-                </h3>
-                <p className="text-sm text-[#636363] mt-0.5 font-open-sauce">
-                  Select a PM for booking #{String(assignModal).slice(-8)}
-                </p>
-              </div>
-              <button
-                onClick={() => setAssignModal(null)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg text-[#909090] hover:bg-[#F2F9F1] hover:text-[#26472B] transition-all text-lg leading-none"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* PM select */}
-            <div className="relative">
-              <select
-                value={selectedPmId}
-                onChange={(e) => setSelectedPmId(e.target.value)}
-                className="w-full appearance-none border border-[#D6EBCF] rounded-lg px-3 py-2.5 pr-9 text-sm font-open-sauce text-[#242424] bg-white focus:ring-2 focus:ring-[#45A735]/30 focus:border-[#45A735] focus:outline-none transition-colors"
-              >
-                <option value="">Choose a PM…</option>
-                {pms.map((pm) => (
-                  <option key={pm._id} value={pm._id}>
-                    {pm.name || pm.mobile}
-                    {pm.mobile && pm.name ? ` · ${pm.mobile}` : ''}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#636363]">
-                <svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-                  <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-            </div>
-
-            {pms.length === 0 && (
-              <p className="text-xs text-[#909090] mt-2 font-open-sauce">
-                No PMs found. Add PMs from the PM management page.
-              </p>
-            )}
-
-            {/* Modal footer */}
-            <div className="flex justify-end gap-2 mt-5">
-              <Button variant="ghost" onClick={() => setAssignModal(null)} disabled={busyAssign}>
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={doAssign}
-                disabled={!selectedPmId || busyAssign}
-                loading={busyAssign}
-              >
-                Assign PM
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
