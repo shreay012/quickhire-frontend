@@ -24,11 +24,15 @@
  */
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { staffAuth } from '@/lib/axios/staffApi';
+
+// Matches /admin/xx or /admin/xx/... where xx is a 2-letter country code.
+const COUNTRY_PATH_RE = /^\/admin\/[a-z]{2}(\/|$)/i;
 
 export default function AdminLayout({ children }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const user = staffAuth.getUser();
@@ -42,7 +46,13 @@ export default function AdminLayout({ children }) {
       return;
     }
     if (user.role === 'admin' && user.country) {
-      router.replace(`/admin/${user.country.toLowerCase()}`);
+      const target = `/admin/${user.country.toLowerCase()}`;
+      // Skip router.replace when we're already inside the country sub-tree —
+      // calling replace('/admin/in') while already at '/admin/in' is harmless
+      // but can cause an unnecessary re-render in some Next.js versions.
+      if (!pathname?.startsWith(target)) {
+        router.replace(target);
+      }
       return;
     }
     // Admin without a country → misconfigured profile. Bounce to login so
@@ -60,19 +70,24 @@ export default function AdminLayout({ children }) {
       finance:  '/finance',
     };
     router.replace(ROLE_HOME[user.role] || '/staff-login');
-  }, [router]);
+  }, [router, pathname]);
 
-  // Once useEffect runs we'll already be navigating away; render a tiny
-  // neutral loading state instead of the old heavy nav.
+  // When the URL is already inside a country sub-tree (/admin/in, /admin/in/bookings,
+  // etc.) the [country] layout (StaffShell) handles all chrome and auth.
+  // Rendering the spinner overlay here would permanently hide that content
+  // because router.replace('/admin/in') is a no-op and the overlay never
+  // clears — which is the root cause of "only loading show ho rha hai".
+  if (COUNTRY_PATH_RE.test(pathname || '')) {
+    return <>{children}</>;
+  }
+
+  // Bare /admin → show redirect spinner while the useEffect above navigates away.
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F7F5]">
       <div className="flex items-center gap-3 text-[#26472B] text-sm font-open-sauce-semibold">
         <span className="w-4 h-4 rounded-full border-2 border-[#45A735] border-t-transparent animate-spin" />
         Redirecting to your workspace…
       </div>
-      {/* Render the child (page.jsx) so Next.js doesn't tear-down mid-redirect;
-          it's invisible behind the absolute-positioned loading state above. */}
-      <div className="hidden">{children}</div>
     </div>
   );
 }
