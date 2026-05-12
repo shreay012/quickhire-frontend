@@ -56,11 +56,13 @@ function fmtDate(d) {
 // Map backend status → StatusBadge tone
 function badgeStatus(s) {
   const map = {
-    paid:      'completed',
-    created:   'pending',
-    failed:    'rejected',
-    refunded:  'cancelled',
-    cancelled: 'cancelled',
+    paid:       'completed',
+    captured:   'completed',
+    authorized: 'completed',
+    created:    'pending',
+    failed:     'rejected',
+    refunded:   'cancelled',
+    cancelled:  'cancelled',
   };
   return map[s] || s || 'pending';
 }
