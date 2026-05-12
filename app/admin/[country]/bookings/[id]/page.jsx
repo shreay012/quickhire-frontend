@@ -116,7 +116,7 @@ function Card({ title, subtitle, children, action, className = '' }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function AdminBookingDetailPage() {
-  const { id } = useParams();
+  const { id, country } = useParams();
   const router  = useRouter();
 
   // ─── Core data ────────────────────────────────────────────────────────────
@@ -301,12 +301,12 @@ export default function AdminBookingDetailPage() {
         <PageHeader
           title="Booking Detail"
           subtitle="Failed to load booking"
-          backHref="/admin/bookings"
+          backHref={`/admin/${country}/bookings`}
         />
         <div className="p-6">
           <ErrorBox error={error} />
           <div className="mt-4">
-            <Button variant="subtle" onClick={() => router.push('/admin/bookings')}>
+            <Button variant="subtle" onClick={() => router.push(`/admin/${country}/bookings`)}>
               ← Back to Bookings
             </Button>
           </div>
@@ -318,7 +318,7 @@ export default function AdminBookingDetailPage() {
   if (!job) {
     return (
       <div className="min-h-screen bg-[#F5F7F5]">
-        <PageHeader title="Booking Detail" subtitle="Loading…" backHref="/admin/bookings" />
+        <PageHeader title="Booking Detail" subtitle="Loading…" backHref={`/admin/${country}/bookings`} />
         <div className="p-6">
           <Spinner />
         </div>
@@ -338,15 +338,15 @@ export default function AdminBookingDetailPage() {
       <PageHeader
         title={`Booking #${bookingId.slice(-8)}`}
         subtitle={`${job.customerName || 'Customer'} · ${job.serviceName || 'Service'} · ${job.status?.replace(/_/g, ' ') || 'pending'}`}
-        backHref="/admin/bookings"
+        backHref={`/admin/${country}/bookings`}
         breadcrumbs={[
-          { label: 'Admin',    href: '/admin' },
-          { label: 'Bookings', href: '/admin/bookings' },
+          { label: 'Admin',    href: `/admin/${country}` },
+          { label: 'Bookings', href: `/admin/${country}/bookings` },
           { label: `#${bookingId.slice(-8)}` },
         ]}
         helpText="Use the right column to assign a PM, transition status, message participants, or cancel the booking."
         action={
-          <Button variant="subtle" size="sm" onClick={() => router.push('/admin/bookings')}>
+          <Button variant="subtle" size="sm" onClick={() => router.push(`/admin/${country}/bookings`)}>
             ← All Bookings
           </Button>
         }

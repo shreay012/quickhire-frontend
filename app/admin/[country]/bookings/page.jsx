@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import staffApi from '@/lib/axios/staffApi';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { s } from '@/lib/utils/i18nText';
@@ -55,6 +55,7 @@ function fmtDate(d) {
 
 export default function AdminBookingsPage() {
   const router = useRouter();
+  const { country } = useParams();
 
   // ─── Data state ───────────────────────────────────────────────────────────
   const [bookings, setBookings]     = useState(null);   // null = loading
@@ -318,7 +319,7 @@ export default function AdminBookingsPage() {
           <Button
             size="sm"
             variant="subtle"
-            onClick={() => router.push(`/admin/bookings/${r._id}`)}
+            onClick={() => router.push(`/admin/${country}/bookings/${r._id}`)}
           >
             View →
           </Button>
