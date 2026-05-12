@@ -147,6 +147,11 @@ const SummaryStepInner = () => {
 
       // Format each service separately
       const allServices = job.services || [];
+      // Backend stores pricing at job-level (job.pricing.subtotal), NOT per-service.
+      // Distribute the total subtotal evenly across services so the cart gets a real price.
+      const jobSubtotal = job.pricing?.subtotal || job.pricing?.basePrice || 0;
+      const pricePerService = allServices.length > 0 ? +(jobSubtotal / allServices.length).toFixed(2) : 0;
+
       const formattedServices = allServices.map((service) => {
         const techNames =
           service.technologyIds?.map((tech) => (typeof tech === 'object' && tech !== null ? tech.name : '')).filter(Boolean).join(", ") ||
@@ -178,7 +183,10 @@ const SummaryStepInner = () => {
           bookingType: bookingTypeDisplay,
           startDate: startDateDisplay,
           isInstant: service.serviceId?.bookingType === "instant",
-          basePrice: service.pricing?.basePrice || 0,
+          // Use per-service pricing if backend set it; otherwise fall back to
+          // the job-level subtotal distributed evenly (covers the common case
+          // of a single-service booking where job.pricing.subtotal is correct).
+          basePrice: service.pricing?.basePrice || pricePerService,
         };
       });
 
@@ -613,7 +621,7 @@ const SummaryStepInner = () => {
             name: s.serviceName,
             image: "/AI.svg",
             duration: `${s.hours} Hours`,
-            price: Number(s.basePrice || 0),
+            price: Number(s.basePrice) || +(subtotal / Math.max(1, bookingData?.services?.length || 1)).toFixed(2) || 0,
             quantity: 1,
             meta: {
               technicalSkills: s.technicalSkills,
