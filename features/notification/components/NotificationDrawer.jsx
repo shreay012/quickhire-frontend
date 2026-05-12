@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
 import {
   fetchAllNotifications,
   clearNotifications,
@@ -11,12 +12,17 @@ import {
 import Image from "next/image";
 import { IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import {
+  resolveNotificationRoute,
+  readCurrentRole,
+} from "@/lib/utils/notificationRoute";
 
 import { fetchDashboardStats } from "@/lib/redux/slices/dashboardSlice";
 import chatSocketService from "@/lib/services/chatSocketService";
 
 const NotificationDrawer = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
+  const router = useRouter();
   const { notifications, isLoading, isLoadingMore, error, pagination } =
     useSelector((state) => state.notifications);
   const scrollRef = useRef(null);
@@ -114,6 +120,16 @@ const NotificationDrawer = ({ isOpen, onClose }) => {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
+
+  const handleNotificationClick = (notification) => {
+    const id = notification.id || notification._id;
+    dispatch(markAsRead(id));
+    const route = resolveNotificationRoute(notification, readCurrentRole());
+    if (route) {
+      onClose();
+      router.push(route);
+    }
+  };
 
   const handleMarkAsRead = (id) => {
     dispatch(markAsRead(id));
@@ -267,6 +283,7 @@ const NotificationDrawer = ({ isOpen, onClose }) => {
                 <div
                   key={notification.id || notification._id}
                   className="bg-white border border-gray-200 rounded-xl p-4 hover:bg-gray-100 cursor-pointer transition-colors"
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex gap-3">
                     {/* Icon */}
